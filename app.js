@@ -6,7 +6,6 @@ var logger = require("morgan");
 var ShareDB = require("sharedb");
 var richText = require("rich-text");
 var cors = require("cors");
-const { map } = require("sharedb/lib/types");
 var QuillDeltaToHtmlConverter =
   require("quill-delta-to-html").QuillDeltaToHtmlConverter;
 
@@ -40,17 +39,16 @@ app.get("/connect/:id", function (req, res, next) {
   let doc = backend.connect().get("document", "rich-text");
   doc.subscribe((err) => {
     if (err) throw err;
-    res.write(JSON.stringify({ data: doc.data }));
-    console.log("subscribed " + req.params.id);
-    doc.on("op", function (op) {
-      // if (!source) {
-      res.write("event: message\n"); // added these
-      res.write(`data: ${JSON.stringify({ data: op })}`);
+    doc.fetch();
+    res.write(`data: ${JSON.stringify({ content: doc.data.ops })}`);
+    res.write("\n\n");
+    clients.set(req.params.id, { res, doc });
+    doc.on("op", (op, source) => {
+      res.write(`data: ${JSON.stringify(op)}`);
       res.write("\n\n");
       console.log(
-        "written: " + req.params.id + " " + JSON.stringify({ data: op })
+        "written: " + req.params.id + " " + `data: ${JSON.stringify(op)}`
       );
-      // }
     });
   });
   res.on("close", () => {
@@ -59,17 +57,16 @@ app.get("/connect/:id", function (req, res, next) {
     doc.unsubscribe();
     res.end();
   });
-
-  clients.set(req.params.id, { res, doc });
 });
 
 app.post("/op/:id", function (req, res, next) {
-  console.log("op " + req.params.id);
+  console.log("op " + req.params.id + " " + JSON.stringify(req.body));
   const doc = clients.get(req.params.id).doc;
-  console.log(doc.data);
   if (!req.body) return;
   req.body.forEach(function (op) {
-    doc.submitOp(op);
+    doc.submitOp(op, (e) => {
+      if (e) console.log(e);
+    });
   });
   res.send("yay");
 });
