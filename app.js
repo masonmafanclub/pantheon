@@ -25,9 +25,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+app.use((req, res, next) => {
+  res.setHeader("X-CSE356", "61f9c1e2ca96e9505dd3f7ea");
+  next();
+});
+
 const clients = new Map();
 
 app.get("/connect/:id", function (req, res, next) {
+  console.log(`/connect/${req.params.id} start`);
   const headers = {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -37,30 +43,40 @@ app.get("/connect/:id", function (req, res, next) {
   res.flushHeaders();
 
   let doc = backend.connect().get("document", "rich-text");
+  const client = { res, doc, active: true };
+  clients.set(req.params.id, client);
   doc.subscribe((err) => {
-    if (err) throw err;
+    if (err) {
+      console.log(e);
+      throw err;
+    }
     doc.fetch();
     res.write(`data: ${JSON.stringify({ content: doc.data.ops })}`);
     res.write("\n\n");
-    clients.set(req.params.id, { res, doc });
+    console.log(
+      `/connect/${req.params.id} data: ${JSON.stringify({
+        content: doc.data.ops,
+      })}`
+    );
     doc.on("op", (op, source) => {
-      res.write(`data: ${JSON.stringify(op)}`);
-      res.write("\n\n");
-      console.log(
-        "written: " + req.params.id + " " + `data: ${JSON.stringify(op)}`
-      );
+      console.log(`/connect/${req.params.id} incoming changes`);
+      if (!source && client.active) {
+        res.write(`data: ${JSON.stringify([op])}`);
+        res.write("\n\n");
+        console.log(`/connect/${req.params.id} data: ${JSON.stringify(op)}`);
+      }
     });
   });
+
   res.on("close", () => {
-    console.log("dropped " + req.params.id);
-    clients.delete(req.params.id);
-    doc.unsubscribe();
+    console.log(`/connect/${req.params.id} dropped`);
+    client.active = false;
     res.end();
   });
 });
 
 app.post("/op/:id", function (req, res, next) {
-  console.log("op " + req.params.id + " " + JSON.stringify(req.body));
+  console.log(`/op/${req.params.id} ${JSON.stringify(req.body)}`);
   const doc = clients.get(req.params.id).doc;
   if (!req.body) return;
   req.body.forEach(function (op) {
@@ -68,16 +84,15 @@ app.post("/op/:id", function (req, res, next) {
       if (e) console.log(e);
     });
   });
-  res.send("yay");
+  res.send("success");
 });
 
 app.get("/doc/:id", function (req, res, next) {
   const doc = clients.get(req.params.id).doc;
   var cfg = {};
   doc.fetch();
-  console.log("doc.data: " + JSON.stringify(doc.data));
   var converter = new QuillDeltaToHtmlConverter(doc.data.ops, cfg);
-  console.log("doc.data: " + converter.convert());
+  console.log(`/doc/${req.params.id} ${converter.convert()}`);
   res.send(converter.convert());
 });
 
