@@ -1,11 +1,12 @@
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
-var ShareDB = require("sharedb");
-var richText = require("rich-text");
-var cors = require("cors");
+import createError from "http-errors";
+import express from "express";
+import path from "path";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
+import ShareDB from "sharedb";
+import richText from "rich-text";
+import cors from "cors";
+
 var QuillDeltaToHtmlConverter =
   require("quill-delta-to-html").QuillDeltaToHtmlConverter;
 
@@ -116,4 +117,4 @@ app.use(function (err, req, res, next) {
   res.send(err);
 });
 
-module.exports = app;
+export default app;
