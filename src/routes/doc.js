@@ -72,7 +72,7 @@ router.post("/op/:id", function (req, res, next) {
   res.send("success");
 });
 
-router.get("/document/:id", function (req, res, next) {
+router.get("/doc/:id", function (req, res, next) {
   console.log(doc1.data.ops)
   const doc = clients.get(req.params.id).doc;
   var cfg = {};
