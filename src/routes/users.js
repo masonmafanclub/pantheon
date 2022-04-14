@@ -1,12 +1,14 @@
 import express from "express";
 import passport from "passport";
+import crypto from "crypto";
 
 import User from "../db/user";
+import sendVerify from "../util/nodemailer";
 
 const router = express.Router();
 
-// register
-router.post("/register", async (req, res) => {
+// signup
+router.post("/signup", async (req, res) => {
   if (!req.body.username || !req.body.password || !req.body.email) {
     res.json({ status: "ERROR", msg: "missing info" });
     return;
@@ -21,13 +23,17 @@ router.post("/register", async (req, res) => {
   }
 
   // create new user
+  const key = crypto.randomBytes(20).toString("hex");
   let user = new User({
     username: req.body.username,
     password: req.body.password,
     email: req.body.email,
     verified: false,
+    key,
   });
   await user.save();
+
+  sendVerify(req.body.email, user._id, key);
 
   res.json({ status: "OK" });
 });
@@ -38,16 +44,19 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
 });
 
 // verify
-router.put("/verify", async (req, res) => {
-  if (!req.body.email) {
+router.get("/verify", async (req, res) => {
+  if (!req.query.id || !req.query.key) {
     res.json({ status: "ERROR", msg: "missing info" });
     return;
   }
 
   // find and update user
-  let user = User.updateOne({ email: req.body.email }, { verified: true });
-  if (!user) {
-    res.json({ status: "ERROR", msg: "no such user" });
+  let userres = await User.updateOne(
+    { _id: req.query.id, key: req.query.key, verified: false },
+    { verified: true }
+  ).exec();
+  if (!userres.modifiedCount) {
+    res.json({ status: "ERROR", msg: "invalid key/id" });
     return;
   }
 

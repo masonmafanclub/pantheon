@@ -3,8 +3,8 @@ import session from "express-session";
 import cors from "cors";
 
 import passport from "./util/passport";
-import sharedbRouter from "./routes/sharedb";
-import accountRouter from "./routes/account";
+import adminRouter from "./routes/admin";
+import usersRouter from "./routes/users";
 import mediaRouter from "./routes/media";
 import docRouter from "./routes/doc";
 
@@ -29,14 +29,14 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(sharedbRouter);
-app.use(accountRouter);
-app.use('/media', mediaRouter);
-app.use('/home', function(req,res){
-  res.sendFile(__dirname+'/static/editor.html')
-})
+app.use("/admin", adminRouter);
+app.use("/users", usersRouter);
+app.use("/media", mediaRouter);
+app.use("/home", function (req, res) {
+  res.sendFile(__dirname + "/static/editor.html");
+});
 // consider removing the obsolete doc endpoint
-app.use('/doc', docRouter)
+app.use("/doc", docRouter);
 
 app.get("/test", function (req, res, next) {
   res.send("Hello World");

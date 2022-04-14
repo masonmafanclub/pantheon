@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export default async (email, key) => {
+export default async (email, id, key) => {
   let transporter = nodemailer.createTransport({
     host: "127.0.0.1",
     port: 587,
@@ -11,9 +11,9 @@ export default async (email, key) => {
     },
   });
   await transporter.sendMail({
-    from: "cse356_noreply",
+    from: "noreply@cse356.compas.cs.stonybrook.edu",
     to: email,
     subject: "Verify Email",
-    text: key,
+    text: `http://masonmafanclub.cse356.compas.cs.stonybrook.edu/users/verify?id=${id}&key=${key}`,
   });
 };
