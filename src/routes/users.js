@@ -43,6 +43,12 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   res.json({ status: "OK" });
 });
 
+// logout
+router.post("/logout", (req, res) => {
+  req.logout();
+  res.json({ status: "OK" });
+});
+
 // verify
 router.get("/verify", async (req, res) => {
   if (!req.query.id || !req.query.key) {

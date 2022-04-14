@@ -55,7 +55,7 @@ router.get("/connect/:id", function (req, res, next) {
   res.on("close", () => {
     console.log(`/connect/${req.params.id} dropped`);
     client.active = false;
-    client.doc.unsubscribe()
+    client.doc.unsubscribe();
     res.end();
   });
 });
@@ -73,16 +73,14 @@ router.post("/op/:id", function (req, res, next) {
 });
 
 router.get("/doc/:id", function (req, res, next) {
-  console.log(doc1.data.ops)
+  console.log(doc1.data.ops);
   const doc = clients.get(req.params.id).doc;
   var cfg = {};
   // doc.fetch();
-  console.log(doc.data.ops)
+  console.log(doc.data.ops);
   var converter = new QuillDeltaToHtmlConverter(doc.data.ops, cfg);
   console.log(`/doc/${req.params.id} ${converter.convert()}`);
   res.send(converter.convert());
 });
-
-
 
 export default router;
