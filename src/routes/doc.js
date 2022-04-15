@@ -1,7 +1,7 @@
 import express from "express";
 
 import { backend, docs } from "../sharedb";
-
+import User from "../db/user";
 const router = express.Router();
 
 var QuillDeltaToHtmlConverter =
@@ -86,6 +86,7 @@ router.get("/connect/:docid/:uid", function (req, res, next) {
   res.on("close", () => {
     console.log(`/connect/${req.params.id} dropped`);
     // presence.unsubscribe(); // is this the same docPresence for everyone? idk :O
+    clients.delete(uid) // do we do this?
     doc.unsubscribe();
     res.end();
   });
@@ -103,6 +104,11 @@ router.post("/op/:docid/:uid", function (req, res, next) {
   if (!req.body) return;
   if (version.equals(req.body.version)) {
     version.inc();
+    // Q: is this really inefficient and bad?
+    newDoc = docs.get(docid)
+    newDoc.last_modified = Date.now()
+    docs.set(docid, newDoc)
+    }
     doc.submitOp(req.body.op);
     res.json({ status: "ok" });
     // client should increment version locally when receives ack
@@ -111,15 +117,29 @@ router.post("/op/:docid/:uid", function (req, res, next) {
     res.json({ status: "retry" });
   }
 });
-
+//  body is this{ index, length }
 router.post("/presence/:docid:uid", function (req, res, next) {
+  const uid = req.params.uid;
+  const docid = req.params.docid;
   // console.log(`/op/${req.params.id} ${JSON.stringify(req.body)}`);
-  const localpresence = clients
-    .get(req.params.uid)
-    .getDocPresence(collection, req.params.docid)
-    .create(); // we want to use uid
+  // const localpresence = clients
+  //   .get(req.params.uid)
+  //   .getDocPresence(collection, req.params.docid)
+  //   .create(); // we want to use uid
   if (!req.body) return;
-  localpresence.submit(req.body); // hoping this format is fine as is without sanitization and stuff
+  // { presence: { id, cursor: { index, length, name } } }
+  const clients = docs.get(docid).clients;
+  if(!req.session){
+    console.log('ERROR: tried to post presence without authed session')
+    res.json({})
+    return;
+  }
+  var user = await User.findOne({email: req.session.passport.user})
+  clients.foreach((client) => {
+    client.res.write(`data: ${JSON.stringify({presence: {id: uid, cursor: {index: req.body.index, length: req.body.length, name: user.username}}})}\n\n`)
+  })
+
+  // localpresence.submit(req.body); // hoping this format is fine as is without sanitization and stuff
   res.json({}); // unsure if this is desired result
 });
 

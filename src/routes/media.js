@@ -19,7 +19,10 @@ const upload = multer({ storage: storage });
 
 // upload, name must be 'media'
 router.post("/upload", upload.single("media"), async (req, res) => {
-  if (req.file) {
+  if (
+    req.file &&
+    (req.file.mime == "image/jpeg" || req.file.mime == "image/png")
+  ) {
     // if file received, create mongoDB Media entry, then return that object ID
     // create new user
     let media = new Media({

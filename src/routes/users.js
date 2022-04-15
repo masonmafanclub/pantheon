@@ -9,23 +9,19 @@ const router = express.Router();
 
 // signup
 router.post("/signup", async (req, res) => {
-  if (!req.body.username || !req.body.password || !req.body.email) {
+  if (!req.body.name || !req.body.password || !req.body.email) {
     res.json({ status: "ERROR", msg: "missing info" });
     return;
   }
-  if (
-    await User.countDocuments({
-      $or: [{ username: req.body.username }, { email: req.body.email }],
-    })
-  ) {
-    res.json({ status: "ERROR", msg: "username/email already taken" });
+  if (await User.countDocuments({ email: req.body.email })) {
+    res.json({ status: "ERROR", msg: "email already taken" });
     return;
   }
 
   // create new user
   const key = crypto.randomBytes(20).toString("hex");
   let user = new User({
-    username: req.body.username,
+    name: req.body.name,
     password: req.body.password,
     email: req.body.email,
     verified: false,
@@ -39,8 +35,9 @@ router.post("/signup", async (req, res) => {
 });
 
 // login
-router.post("/login", passport.authenticate("local"), (req, res) => {
-  res.json({ status: "OK" });
+router.post("/login", passport.authenticate("local"), async (req, res) => {
+  var user = await User.findOne({ email: req.session.passport.user });
+  res.json({ username: user.username });
 });
 
 // logout

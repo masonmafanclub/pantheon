@@ -32,6 +32,7 @@ router.post("/create", function (req, res, next) {
     version: new Version(),
     name: req.body.name,
     clients: new Map(),
+    last_modified: Date.now(),
     // presence: []; // todo figure this out
   });
 
@@ -48,13 +49,13 @@ router.post("/delete", function (req, res, next) {
   var doc = backend.connect().get("document", docid);
   doc.destroy();
 
-  docs.delete(docid, {
-    version: new Version(),
-    name: req.body.name,
-    clients: new Map(),
-  });
+  docs.delete(docid);
 
   return res.status(200).json({});
+});
+
+router.get("/list", function (req, res, next) {
+  res.send("todo");
 });
 
 export default router;
