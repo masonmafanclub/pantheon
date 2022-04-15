@@ -1,0 +1,72 @@
+<!-- Include stylesheet -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<!-- Create the editor container -->
+<div id="editor"></div>
+<button onclick='insertImage()' id="image">Add Image</button>
+
+<!-- Include the Quill library -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<!-- Initialize Quill editor -->
+<script>
+  const pantheon = "http://194.113.75.19:3000";
+  const uid = Math.floor(Math.random()*1000);
+  const docid = '<%= docid %>'
+  var quill = new Quill('#editor', {
+    theme: 'snow'
+  });
+  console.log('uid', uid);
+  console.log('docid', docid)
+  var Delta = Quill.import('delta');
+  var firstMessage = true;
+  const eventSource = new EventSource(`${pantheon}/doc/connect/${docid}/${uid}`);
+    eventSource.onopen = (e) => {
+      console.log("opened connection");
+      console.log(e);
+    };
+    eventSource.onmessage = (e) => {
+      if(firstMessage){
+        //  document.getElementById('editor').hidden = false
+         ops =JSON.parse(e.data).content
+         delta = new Delta(ops)
+         quill.setContents(delta, source='api')
+         firstMessage = false
+
+      }
+      else{
+        console.log(JSON.parse(e.data)[0])
+        data = JSON.parse(e.data)
+        for(i in data){
+          ops = data[i]
+
+          delta = new Delta(ops)
+          console.log(delta)
+          quill.updateContents(delta,source='api')
+        }
+      }
+    };
+
+  function insertImage(){
+    delta = quill.insertEmbed(0, 'image', 'http://194.113.75.19:3000/media/access/6256ffcf67b4678db040b43d')
+    sendDelta(delta)
+  }
+  
+  function sendDelta(delta){
+    const res = fetch(`${pantheon}/doc/op/${docid}/${uid}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify([delta.ops]),
+    });
+  }
+  quill.on('text-change', function(delta, oldDelta, source) {
+    if (source == 'api') {
+        console.log("An API call triggered this change.");
+    } else if (source == 'user') {
+        console.log("A user action triggered this change.");
+        sendDelta(delta)
+    }
+});
+</script>

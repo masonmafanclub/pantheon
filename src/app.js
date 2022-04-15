@@ -9,7 +9,7 @@ import mediaRouter from "./routes/media";
 import docRouter from "./routes/doc";
 
 var app = express();
-
+app.set('view engine', 'ejs');
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -33,7 +33,7 @@ app.use("/admin", adminRouter);
 app.use("/users", usersRouter);
 app.use("/media", mediaRouter);
 app.use("/home", function (req, res) {
-  res.sendFile(__dirname + "/static/editor.html");
+  res.render('home');
 });
 // consider removing the obsolete doc endpoint
 app.use("/doc", docRouter);
