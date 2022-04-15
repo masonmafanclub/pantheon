@@ -4,6 +4,21 @@ import richText from "rich-text";
 
 const router = express.Router();
 
+class Version {
+  constructor() {
+    this.val = 0;
+  }
+  val() {
+    return this.val;
+  }
+  equals(other) {
+    return this.val == other;
+  }
+  inc() {
+    this.val++;
+  }
+}
+
 var QuillDeltaToHtmlConverter =
   require("quill-delta-to-html").QuillDeltaToHtmlConverter;
 
@@ -11,15 +26,16 @@ ShareDB.types.register(richText.type);
 var backend = new ShareDB();
 
 var connection = backend.connect();
-var collection = "document";
-var doc = connection.get(collection, "rich-text");
-doc.create([], "rich-text");
+var initdoc = connection.get("document", "rich");
+initdoc.create([], "rich-text");
 
-const clients = new Map();
-const versions = new Map();
+const docs = new Map();
 
 router.get("/connect/:docid/:uid", function (req, res, next) {
-  console.log(`/connect/${req.params.id} start`);
+  const uid = req.params.uid;
+  const docid = req.params.docid;
+
+  console.log(`/connect/${req.params.docid}/${req.params.uid} start`);
   const headers = {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -28,32 +44,35 @@ router.get("/connect/:docid/:uid", function (req, res, next) {
   res.writeHead(200, headers);
   res.flushHeaders();
 
-  if (clients.has(req.params.uid)) {
-    connection = clients[req.params.uid].connection;
-  } else {
-    let connection = backend.connect();
-    const client = { res, connection, active: true };
-    clients.set(req.params.uid, client);
+  if (!docs.has(docid)) {
+    docs.set(docid, {
+      version: new Version(),
+      clients: new Map(),
+    });
   }
-  let doc = connection.get(collection, req.params.docid);
-  let docPresence = connection.getDocPresence(collection, req.params.docid);
+  const version = docs.get(docid).version;
+  const clients = docs.get(docid).clients;
 
-  if (!versions.has(req.params.docid)) {
-    // create new doc, set version to 0
-    versions.set(req.params.docid, 0);
-    doc.create([], "rich-text");
+  if (!clients.has(uid)) {
+    clients.set(uid, {
+      res,
+      doc: backend.connect().get("document", docid),
+      presence: connection.getDocPresence("document", docid),
+    });
   }
+  const presence = clients.get(uid).presence;
+  const doc = clients.get(uid).doc;
 
   // each client should have their own connection
   // "The EventStream should send messages in the form {content, version}, {presence}, {ack}, or a delta op"
   // {presence {id:, cursor: {index, length, name}}} or {presence:{id:, cursor: null}}
   // ack =
-  docPresence.subscribe((err) => {
+  presence.subscribe((err) => {
     if (err) {
       console.log(err);
       throw err;
     }
-    docPresence.on("receive", (id, value) => {
+    presence.on("receive", (id, value) => {
       console.log(
         `wrote data: ${JSON.stringify({ presence: { id: id, cursor: value } })}`
       );
@@ -62,26 +81,27 @@ router.get("/connect/:docid/:uid", function (req, res, next) {
       );
     });
   });
+
+  // doc = connection.get("document", "rich");
   doc.subscribe((err) => {
-    if (err) {
-      console.log(err);
-      throw err;
-    }
+    if (err) throw err;
+
     doc.fetch();
     res.write(
       `data: ${JSON.stringify({
         content: doc.data.ops,
-        version: versions.get(req.params.docid),
+        // version: version.val(),
       })}`
     );
     res.write("\n\n");
-    console.log(
-      `/connect/${req.params.docid}/${req.params.uid} data: ${JSON.stringify({
-        content: doc.data.ops,
-      })}`
-    );
+    // console.log(
+    //   `/connect/${req.params.docid}/${req.params.uid} data: ${JSON.stringify({
+    //     content: doc.data.ops,
+    //   })}`
+    // );
     doc.on("op", (op, source) => {
       // console.log(`/connect/${req.params.id} incoming changes`);
+      console.log(source);
       if (source) {
         res.write(`data: ${JSON.stringify({ ack: op })}`);
         res.write("\n\n");
@@ -95,20 +115,26 @@ router.get("/connect/:docid/:uid", function (req, res, next) {
 
   res.on("close", () => {
     console.log(`/connect/${req.params.id} dropped`);
-    // client.active = false;
-    docPresence.unsubscribe(); // is this the same docPresence for everyone?
+    presence.unsubscribe(); // is this the same docPresence for everyone? idk :O
     doc.unsubscribe();
     res.end();
   });
 });
 
-router.post("/op/:docid:uid", function (req, res, next) {
+router.post("/op/:docid/:uid", function (req, res, next) {
+  const uid = req.params.uid;
+  const docid = req.params.docid;
+
+  const version = docs.get(docid).version;
+  const clients = docs.get(docid).clients;
+  const doc = clients.get(uid).doc;
+  const presence = clients.get(uid).presence;
   // console.log(`/op/${req.params.id} ${JSON.stringify(req.body)}`);
-  const doc = clients.get(req.params.uid).get(collection, req.params.docid);
+
   if (!req.body) return;
-  if (req.body.version == versions.get(req.params.docid)) {
-    versions.set(req.params.docid, versions.get(req.params.docid) + 1);
-    doc.submitOp();
+  if (version.equals(req.body.version)) {
+    version.inc();
+    doc.submitOp(req.body.op);
     res.json({ status: "ok" });
     // client should increment version locally when receives ack
   } else {
