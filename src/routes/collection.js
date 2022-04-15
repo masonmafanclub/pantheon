@@ -1,6 +1,7 @@
 import express from "express";
-
+import crypto from "crypto";
 import { backend, docs } from "../sharedb";
+import { isAuthenticated } from "../util/passport";
 
 const router = express.Router();
 
@@ -8,9 +9,6 @@ const router = express.Router();
 class Version {
   constructor() {
     this.val = 0;
-  }
-  val() {
-    return this.val;
   }
   equals(other) {
     return this.val == other;
@@ -20,11 +18,11 @@ class Version {
   }
 }
 
-router.post("/create", function (req, res, next) {
+router.post("/create", isAuthenticated, function (req, res, next) {
   if (!req.body.name) {
     return res.status(400).json({ status: "error" });
   }
-  const docid = req.body.name;
+  const docid = crypto.randomBytes(20).toString("hex");
 
   var doc = backend.connect().get("document", docid);
   doc.create([], "rich-text");
@@ -39,7 +37,7 @@ router.post("/create", function (req, res, next) {
   return res.status(200).json({ docid });
 });
 
-router.post("/delete", function (req, res, next) {
+router.post("/delete", isAuthenticated, function (req, res, next) {
   console.log(req.body.name);
   if (!req.body.name) {
     return res.status(400).json({ status: "error" });
@@ -54,8 +52,15 @@ router.post("/delete", function (req, res, next) {
   return res.status(200).json({});
 });
 
-router.get("/list", function (req, res, next) {
-  res.send("todo");
+router.get("/list", isAuthenticated, function (req, res, next) {
+  // sort by lastmodified
+  var sortedDocs = Array.from(docs.keys()).sort(
+    (a, b) => docs.get(b).last_modified - docs.get(a).last_modified
+  );
+  var retVal = sortedDocs
+    .slice(0, 10)
+    .map((docid) => ({ id: docid, name: docs.get(docid).name }));
+  res.json(retVal);
 });
 
 export default router;

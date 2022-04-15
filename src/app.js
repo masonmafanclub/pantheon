@@ -29,7 +29,11 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-
+app.use(function (req, res, next) {
+  var fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
+  console.log(req.method,fullUrl, 'body:', req.body);
+  next();
+});
 app.use("/admin", adminRouter);
 app.use("/collection", collectionRouter);
 app.use("/users", usersRouter);

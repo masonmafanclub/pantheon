@@ -35,9 +35,32 @@ router.post("/signup", async (req, res) => {
 });
 
 // login
-router.post("/login", passport.authenticate("local"), async (req, res) => {
-  var user = await User.findOne({ email: req.session.passport.user });
-  res.json({ username: user.username });
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", function (err, user, info) {
+    if (err) {
+      return res.status(401).json({ error: true, description: `err: ${err}` });
+    }
+    if (!user) {
+      return res
+        .status(401)
+        .json({ error: true, description: "no user found" });
+    }
+    req.login(user, function (err) {
+      if (err) {
+        return res.status(401).json({
+          error: true,
+          description: "actually doomed if this happens",
+        });
+      }
+      if (!user.verified) {
+        return res.status(401).json({
+          error: true,
+          description: "not verified",
+        });
+      }
+      return res.status(200).json({ name: user.name });
+    });
+  })(req, res, next);
 });
 
 // logout

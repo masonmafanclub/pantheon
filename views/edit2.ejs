@@ -11,40 +11,27 @@
 <!-- Initialize Quill editor -->
 <script>
   const pantheon = "http://masonmafanclub.cse356.compas.cs.stonybrook.edu";
-  const uid = Math.floor(Math.random() * 1000);
+  const uid = Math.floor(Math.random() * 100000);
   const docid = "<%= docid %>";
 
-  let version = 0;
   var quill = new Quill("#editor", {
     theme: "snow",
   });
 
-  console.log("uid:", uid);
-  console.log("docid:", docid);
+  console.log("uid", uid);
+  console.log("docid", docid);
 
   var Delta = Quill.import("delta");
-
+  var firstMessage = true;
   const eventSource = new EventSource(
     `${pantheon}/doc/connect/${docid}/${uid}`
   );
   eventSource.onopen = (e) => {
     console.log("opened connection");
-    console.log("error:", e);
+    console.log(e);
   };
   eventSource.onmessage = (e) => {
-    let data = JSON.parse(e.data);
-    if (data.content) {
-      version = data.version;
-    } else if (data.presence) {
-    } else if (data.ack) {
-      version += 1;
-    } else {
-      let ops = data;
-      delta = new Delta(ops);
-      console.log(delta);
-      quill.updateContents(delta, (source = "api"));
-      version += 1;
-    }
+
     if (firstMessage) {
       //  document.getElementById('editor').hidden = false
       ops = JSON.parse(e.data).content;
@@ -54,6 +41,13 @@
     } else {
       console.log(JSON.parse(e.data)[0]);
       data = JSON.parse(e.data);
+      for (i in data) {
+        ops = data[i];
+
+        delta = new Delta(ops);
+        console.log(delta);
+        quill.updateContents(delta, (source = "api"));
+      }
     }
   };
 
@@ -66,7 +60,6 @@
     sendDelta(delta);
   }
 
-  const queue = 0;
   function sendDelta(delta) {
     const res = fetch(`${pantheon}/doc/op/${docid}/${uid}`, {
       method: "POST",
@@ -76,7 +69,6 @@
       body: JSON.stringify([delta.ops]),
     });
   }
-
   quill.on("text-change", function (delta, oldDelta, source) {
     if (source == "api") {
       console.log("An API call triggered this change.");
