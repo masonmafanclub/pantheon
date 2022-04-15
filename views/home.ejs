@@ -1,10 +1,37 @@
 <script>
-    var list = document.getElementById("list")
-    fetch('/collection/list')
+    
+    fetch('/collection/list').then((response) => {
+    if (!response.ok) {
+        
+      throw new Error(`HTTP error! Status: ${ response.status }`);
+    }
+    
+    return response.json();
+  })
+  .then((data) => {
+      console.log(data)
+      var list = document.getElementById("list")
+    for(doc in data){
+        console.log(doc)
+      let li = document.createElement("li")
+      let a = document.createElement("a");
+      let node = document.createTextNode(data[doc].name);
+      a.href = '/doc/edit/'+data[doc].id
+      a.appendChild(node)
+      li.appendChild(a)
+      list.appendChild(li)
+
+    }
+  });
+    
 </script>
 <div>
-    <div id="list"></div>
-    <form action="">
+    <div>
+        Documents:
+        <ul id="list"></ul>
+    </div>
+    
+    <form action="/collection/create" method="POST">
         <label for="name">Document Name</label><br>
         <input type="text" id="name" name="name"><br>
         <input type="submit">

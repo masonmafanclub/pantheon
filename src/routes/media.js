@@ -23,11 +23,11 @@ const upload = multer({ storage: storage });
 router.post(
   "/upload",
   isAuthenticated,
-  upload.single("media"),
+  upload.single("file"),
   async (req, res) => {
     if (
       req.file &&
-      (req.file.mime == "image/jpeg" || req.file.mime == "image/png")
+      (req.file.mimetype == "image/jpeg" || req.file.mimetype == "image/png")
     ) {
       // if file received, create mongoDB Media entry, then return that object ID
       // create new user
@@ -37,11 +37,13 @@ router.post(
         mimetype: req.file.mimetype,
         path: req.file.path,
       });
+      console.log(media);
       await media.save();
       res.json({ mediaid: media._id });
     } else {
       console.log("File unsuccessfully uploaded");
-      res.status(500).send("File unsuccessfully uploaded");
+      console.log(req.file);
+      res.json({ error: true, description: "File is of wrong type or does not exist." });
     }
   }
 );

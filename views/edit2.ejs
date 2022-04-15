@@ -20,6 +20,11 @@
 
   console.log("uid", uid);
   console.log("docid", docid);
+// IMPORTANT variables
+  var version = 0
+  var lastSubmitted = {}
+
+
 
   var Delta = Quill.import("delta");
   var firstMessage = true;
@@ -31,23 +36,31 @@
     console.log(e);
   };
   eventSource.onmessage = (e) => {
-
-    if (firstMessage) {
-      //  document.getElementById('editor').hidden = false
-      ops = JSON.parse(e.data).content;
-      delta = new Delta(ops);
+    var data = JSON.parse(e.data)
+    if(data.hasOwnProperty('content') && data.hasOwnProperty('version')){
+      // { content, version }, { presence }, { ack },
+      version = data.version
+      delta = new Delta(data.content)
       quill.setContents(delta, (source = "api"));
-      firstMessage = false;
-    } else {
-      console.log(JSON.parse(e.data)[0]);
-      data = JSON.parse(e.data);
-      for (i in data) {
-        ops = data[i];
+    }
+    else if (data.hasOwnProperty('presence')){
 
-        delta = new Delta(ops);
-        console.log(delta);
-        quill.updateContents(delta, (source = "api"));
-      }
+    }
+    else if (data.hasOwnProperty('ack')){
+      var acked = data.ack;
+      console.log('acked: ', acked, 'lastSubmitted: ', lastSubmitted)
+      // we can send again
+    }
+    else{
+      // for (i in data) {
+      //   ops = data[i];
+
+      //   delta = new Delta(ops);
+      //   console.log(delta);
+      //   quill.updateContents(delta, (source = "api"));
+      // }
+      quill.updateContents(new Delta(data), (source = "api"));
+      version += 1;
     }
   };
 
@@ -61,12 +74,13 @@
   }
 
   function sendDelta(delta) {
+    lastSubmitted = delta.ops // replace with queue after
     const res = fetch(`${pantheon}/doc/op/${docid}/${uid}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify([delta.ops]),
+      body: JSON.stringify({version: version, op: delta.ops}),
     });
   }
   quill.on("text-change", function (delta, oldDelta, source) {

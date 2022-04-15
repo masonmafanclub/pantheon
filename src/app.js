@@ -38,6 +38,9 @@ app.use("/admin", adminRouter);
 app.use("/collection", collectionRouter);
 app.use("/users", usersRouter);
 app.use("/media", mediaRouter);
+app.use("/login", function (req, res) {
+  res.render("login");
+});
 app.use("/home", function (req, res) {
   res.render("home");
 });

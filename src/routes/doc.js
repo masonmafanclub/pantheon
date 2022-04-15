@@ -125,13 +125,9 @@ router.post(
   async function (req, res, next) {
     const uid = req.params.uid;
     const docid = req.params.docid;
-    // console.log(`/op/${req.params.id} ${JSON.stringify(req.body)}`);
-    // const localpresence = clients
-    //   .get(req.params.uid)
-    //   .getDocPresence(collection, req.params.docid)
-    //   .create(); // we want to use uid
+
     if (!req.body) return;
-    // { presence: { id, cursor: { index, length, name } } }
+
     const clients = docs.get(docid).clients;
     if (!req.session || !req.session.passport) {
       console.log("ERROR: tried to post presence without authed session");
@@ -156,7 +152,6 @@ router.post(
       }
     });
 
-    // localpresence.submit(req.body); // hoping this format is fine as is without sanitization and stuff
     res.json({}); // unsure if this is desired result
   }
 );
@@ -169,12 +164,9 @@ router.get("/get/:docid/:uid", isAuthenticated, function (req, res, next) {
   const doc = clients.get(uid).doc;
   doc.fetch();
 
-  // const doc = clients.get(req.params.id).doc;
-  var cfg = {};
-  // doc.fetch();
   console.log(doc.data.ops);
-  var converter = new QuillDeltaToHtmlConverter(doc.data.ops, cfg);
-  console.log(`/doc/${req.params.id} ${converter.convert()}`);
+  var converter = new QuillDeltaToHtmlConverter(doc.data.ops, {});
+  console.log(`/doc/${req.params.uid} ${converter.convert()}`);
   res.send(converter.convert());
 });
 

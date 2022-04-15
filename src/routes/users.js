@@ -58,6 +58,7 @@ router.post("/login", (req, res, next) => {
           description: "not verified",
         });
       }
+      console.log(user)
       return res.status(200).json({ name: user.name });
     });
   })(req, res, next);
@@ -67,6 +68,14 @@ router.post("/login", (req, res, next) => {
 router.post("/logout", (req, res) => {
   req.logout();
   res.json({ status: "OK" });
+});
+router.get("/test", (req, res) => {
+  if (!req.session || !req.session.passport) {
+    res.send("no session")
+  }
+  else{
+    res.json(req.session.passport)
+  }
 });
 
 // verify
