@@ -2,8 +2,6 @@ import express from "express";
 import session from "express-session";
 import cors from "cors";
 
-import passport from "./util/passport";
-import adminRouter from "./routes/admin";
 import collectionRouter from "./routes/collection";
 import usersRouter from "./routes/users";
 import mediaRouter from "./routes/media";
@@ -27,14 +25,11 @@ app.use(
   })
 );
 
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(function (req, res, next) {
   var fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
   console.log(req.method, fullUrl, "body:", req.body);
   next();
 });
-app.use("/admin", adminRouter);
 app.use("/collection", collectionRouter);
 app.use("/users", usersRouter);
 app.use("/media", mediaRouter);

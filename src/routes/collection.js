@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import { backend, docs } from "../sharedb";
-import { isAuthenticated } from "../util/passport";
+import { isAuthenticated } from "../util/auth";
 
 const router = express.Router();
 

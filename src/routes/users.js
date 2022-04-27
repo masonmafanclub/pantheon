@@ -1,11 +1,9 @@
 import express from "express";
-import passport from "passport";
 import crypto from "crypto";
 import fetch from "node-fetch";
-import { isAuthenticated } from "../util/passport";
+import { isAuthenticated } from "../util/auth";
 import "dotenv/config";
 
-import User from "../db/user";
 import sendVerify from "../util/nodemailer";
 
 const router = express.Router();
@@ -36,6 +34,7 @@ router.post("/login", async (req, res) => {
       body: JSON.stringify({ ...req.body, cookie: req.sessionID }),
     })
   ).json();
+  req.session.name = threshres.name;
 
   res.json(threshres);
 });

@@ -1,8 +1,7 @@
 import express from "express";
 
 import { backend, docs } from "../sharedb";
-import { isAuthenticated } from "../util/passport";
-import User from "../db/user";
+import { isAuthenticated } from "../util/auth";
 const router = express.Router();
 
 var QuillDeltaToHtmlConverter =
@@ -129,12 +128,6 @@ router.post(
     if (!req.body) return;
 
     const clients = docs.get(docid).clients;
-    if (!req.session || !req.session.passport) {
-      console.log("ERROR: tried to post presence without authed session");
-      res.json({});
-      return;
-    }
-    var user = await User.findOne({ email: req.session.passport.user });
     clients.forEach((client, clientuid) => {
       if (clientuid !== uid) {
         client.res.write(
@@ -144,7 +137,7 @@ router.post(
               cursor: {
                 index: req.body.index,
                 length: req.body.length,
-                name: user.name,
+                name: req.session.name,
               },
             },
           })}\n\n`

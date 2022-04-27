@@ -1,8 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import User from "../db/user";
 import Media from "../db/media";
-import { isAuthenticated } from "../util/passport";
+import { isAuthenticated } from "../util/auth";
 
 const router = express.Router();
 const multer = require("multer");
@@ -43,7 +42,10 @@ router.post(
     } else {
       console.log("File unsuccessfully uploaded");
       console.log(req.file);
-      res.json({ error: true, description: "File is of wrong type or does not exist." });
+      res.json({
+        error: true,
+        description: "File is of wrong type or does not exist.",
+      });
     }
   }
 );
