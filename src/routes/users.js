@@ -1,6 +1,9 @@
 import express from "express";
 import passport from "passport";
 import crypto from "crypto";
+import fetch from "node-fetch";
+import { isAuthenticated } from "../util/passport";
+import "dotenv/config";
 
 import User from "../db/user";
 import sendVerify from "../util/nodemailer";
@@ -9,92 +12,69 @@ const router = express.Router();
 
 // signup
 router.post("/signup", async (req, res) => {
-  if (!req.body.name || !req.body.password || !req.body.email) {
-    res.json({ status: "ERROR", msg: "missing info" });
-    return;
-  }
-  if (await User.countDocuments({ email: req.body.email })) {
-    res.json({ status: "ERROR", msg: "email already taken" });
-    return;
-  }
+  let threshres = await (
+    await fetch(`http://${process.env.THRESH_URL}/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...req.body, verified: true }),
+    })
+  ).json();
 
-  // create new user
-  const key = crypto.randomBytes(20).toString("hex");
-  let user = new User({
-    name: req.body.name,
-    password: req.body.password,
-    email: req.body.email,
-    verified: false,
-    key,
-  });
-  await user.save();
-
-  sendVerify(req.body.email, user._id, key);
-
-  res.json({ status: "OK" });
+  res.json(threshres);
 });
 
 // login
-router.post("/login", (req, res, next) => {
-  passport.authenticate("local", function (err, user, info) {
-    if (err) {
-      return res.status(401).json({ error: true, description: `err: ${err}` });
-    }
-    if (!user) {
-      return res
-        .status(401)
-        .json({ error: true, description: "no user found" });
-    }
-    req.login(user, function (err) {
-      if (err) {
-        return res.status(401).json({
-          error: true,
-          description: "actually doomed if this happens",
-        });
-      }
-      if (!user.verified) {
-        return res.status(401).json({
-          error: true,
-          description: "not verified",
-        });
-      }
-      console.log(user)
-      return res.status(200).json({ name: user.name });
-    });
-  })(req, res, next);
+router.post("/login", async (req, res) => {
+  let threshres = await (
+    await fetch(`http://${process.env.THRESH_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...req.body, cookie: req.sessionID }),
+    })
+  ).json();
+
+  res.json(threshres);
 });
 
 // logout
-router.post("/logout", (req, res) => {
-  req.logout();
-  res.json({ status: "OK" });
-});
-router.get("/test", (req, res) => {
-  if (!req.session || !req.session.passport) {
-    res.send("no session")
-  }
-  else{
-    res.json(req.session.passport)
-  }
+router.post("/logout", async (req, res) => {
+  let threshres = await (
+    await fetch(`http://${process.env.THRESH_URL}/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cookie: req.sessionID }),
+    })
+  ).json();
+
+  res.json(threshres);
 });
 
 // verify
 router.get("/verify", async (req, res) => {
-  if (!req.query.id || !req.query.key) {
-    res.json({ status: "ERROR", msg: "missing info" });
-    return;
-  }
+  if (!req.query.id || !req.query.key)
+    return res.json({ error: true, description: "missing info" });
 
-  // find and update user
-  let userres = await User.updateOne(
-    { _id: req.query.id, key: req.query.key, verified: false },
-    { verified: true }
-  ).exec();
-  if (!userres.modifiedCount) {
-    res.json({ status: "ERROR", msg: "invalid key/id" });
-    return;
-  }
+  let threshres = await (
+    await fetch(`http://${process.env.THRESH_URL}/verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ key: req.query.key, id: req.query.id }),
+    })
+  ).json();
 
+  res.json(threshres);
+});
+
+// check
+router.get("/check", isAuthenticated, async (req, res) => {
   res.json({ status: "OK" });
 });
 

@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 
 app.use(
   session({
-    secret: "fyi the fields below are required idk what they do",
+    secret: "secret",
     resave: false,
     saveUninitialized: true,
   })
@@ -31,7 +31,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(function (req, res, next) {
   var fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
-  console.log(req.method,fullUrl, 'body:', req.body);
+  console.log(req.method, fullUrl, "body:", req.body);
   next();
 });
 app.use("/admin", adminRouter);
