@@ -28,7 +28,7 @@ router.get("/connect/:docid/:uid", isAuthenticated, (req, res) => {
   };
 
   res.on("close", () => {
-    console.log(`/connect/${req.params.id} dropped`);
+    console.log(`/connect/${docid} dropped`);
     eventSource.close();
     res.end();
   });
@@ -54,7 +54,7 @@ router.post("/presence/:docid/:uid", isAuthenticated, (req, res) => {
   axios({
     method: "post",
     url: `http://${process.env.NAUTILUS_URL}/doc/presence/${docid}/${uid}`,
-    data: { ...req.body, name: "HI" }, // TODO : REPLACE HI WITH ACTUAL NAME
+    data: { ...req.body, name: req.session.name }, // TODO : REPLACE HI WITH ACTUAL NAME
   })
     .then((nautres) => {
       res.status(200).json(nautres.data);
