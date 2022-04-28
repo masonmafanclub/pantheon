@@ -14,4 +14,5 @@ export const isAuthenticated = async (req, res, next) => {
   ).json();
   if (logged) return next();
   else res.status(401).json({ error: true, description: "not logged in" });
+  return next();
 };

@@ -2,7 +2,7 @@ import express from "express";
 import FormData from "form-data";
 import multer from "multer";
 import fetch from "node-fetch";
-import { isAuthenticated } from "../util/auth";
+import { isAuthenticated } from "../auth";
 
 const router = express.Router();
 

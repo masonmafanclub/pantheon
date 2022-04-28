@@ -1,10 +1,8 @@
 import express from "express";
 import crypto from "crypto";
 import fetch from "node-fetch";
-import { isAuthenticated } from "../util/auth";
+import { isAuthenticated } from "../auth";
 import "dotenv/config";
-
-import sendVerify from "../util/nodemailer";
 
 const router = express.Router();
 

@@ -1,66 +1,52 @@
 import express from "express";
 import crypto from "crypto";
-import { backend, docs } from "../sharedb";
-import { isAuthenticated } from "../util/auth";
+import axios from "axios";
+import { isAuthenticated } from "../auth";
 
 const router = express.Router();
 
-// fancy wrapper around integer
-class Version {
-  constructor() {
-    this.val = 0;
-  }
-  equals(other) {
-    return this.val == other;
-  }
-  inc() {
-    this.val++;
-  }
-}
-
-router.post("/create", isAuthenticated, function (req, res, next) {
-  if (!req.body.name) {
-    return res.status(400).json({ status: "error" });
-  }
+router.post("/create", isAuthenticated, (req, res, next) => {
   const docid = crypto.randomBytes(20).toString("hex");
 
-  var doc = backend.connect().get("document", docid);
-  doc.create([], "rich-text");
-  docs.set(docid, {
-    version: new Version(),
-    name: req.body.name,
-    clients: new Map(),
-    last_modified: Date.now(),
-    // presence: []; // todo figure this out
-  });
-
-  return res.status(200).json({ docid });
+  axios({
+    method: "post",
+    url: `http://${process.env.NAUTILUS_URL}/collection/create`,
+    data: {
+      name: req.body.name,
+      docid,
+    },
+  })
+    .then((nautres) => {
+      res.status(200).json({ docid });
+    })
+    .catch((nauterr) => {
+      res.status(400).json(nauterr.response.data);
+    });
 });
 
-router.post("/delete", isAuthenticated, function (req, res, next) {
-  console.log(req.body.name);
-  if (!req.body.name) {
-    return res.status(400).json({ status: "error" });
-  }
+router.post("/delete", isAuthenticated, (req, res, next) => {
   const docid = req.body.name;
 
-  var doc = backend.connect().get("document", docid);
-  doc.destroy();
-
-  docs.delete(docid);
-
-  return res.status(200).json({});
+  axios({
+    method: "post",
+    url: `http://${process.env.NAUTILUS_URL}/collection/delete`,
+    data: { docid },
+  })
+    .then((nautres) => {
+      res.status(200).json({});
+    })
+    .catch((nauterr) => {
+      res.status(400).json(nauterr.response.data);
+    });
 });
 
-router.get("/list", isAuthenticated, function (req, res, next) {
-  // sort by lastmodified
-  var sortedDocs = Array.from(docs.keys()).sort(
-    (a, b) => docs.get(b).last_modified - docs.get(a).last_modified
-  );
-  var retVal = sortedDocs
-    .slice(0, 10)
-    .map((docid) => ({ id: docid, name: docs.get(docid).name }));
-  res.json(retVal);
+router.get("/list", isAuthenticated, (req, res, next) => {
+  axios({
+    method: "get",
+    url: `http://${process.env.NAUTILUS_URL}/collection/list`,
+  }).then((nautres) => {
+    res.status(200).json(nautres.data);
+  });
 });
 
 export default router;

@@ -1,6 +1,5 @@
 import express from "express";
 import session from "express-session";
-import cors from "cors";
 
 import collectionRouter from "./routes/collection";
 import usersRouter from "./routes/users";
@@ -9,9 +8,9 @@ import docRouter from "./routes/doc";
 
 var app = express();
 app.set("view engine", "ejs");
-app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
 app.use((req, res, next) => {
   res.setHeader("X-CSE356", "61f9c1e2ca96e9505dd3f7ea");
   next();
