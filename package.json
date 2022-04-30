@@ -17,7 +17,8 @@
     "express-session": "^1.17.2",
     "form-data": "^4.0.0",
     "multer": "^1.4.4",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "v8-profiler-next": "^1.5.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",

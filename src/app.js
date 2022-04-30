@@ -1,6 +1,9 @@
 import express from "express";
 import session from "express-session";
 
+import fs from "fs";
+import v8Profiler from "v8-profiler-next";
+
 import collectionRouter from "./routes/collection";
 import usersRouter from "./routes/users";
 import mediaRouter from "./routes/media";
@@ -44,8 +47,17 @@ app.use("/home", function (req, res) {
   res.render("home");
 });
 
-app.get("/test", function (req, res, next) {
-  res.send("Hello World");
+app.get("/start", function (req, res) {
+  v8Profiler.setGenerateType(1);
+  v8Profiler.startProfiling("profile", true);
+});
+
+app.get("/stop", function (req, res) {
+  const profile = v8Profiler.stopProfiling("profile");
+  profile.export(function (error, result) {
+    fs.writeFileSync(`profiles/${Date.now()}.cpuprofile`, result);
+    profile.delete();
+  });
 });
 
 export default app;
