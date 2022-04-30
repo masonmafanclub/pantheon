@@ -4,9 +4,14 @@ import axios from "axios";
 
 import { isAuthenticated } from "../auth";
 
+let total_cx = 0;
+
 const router = express.Router();
 
 router.get("/connect/:docid/:uid", isAuthenticated, (req, res) => {
+  total_cx += 1;
+  console.log(total_cx);
+
   const { uid, docid } = req.params;
 
   const headers = {
@@ -27,8 +32,13 @@ router.get("/connect/:docid/:uid", isAuthenticated, (req, res) => {
     res.write("\n\n");
   };
 
+  eventSource.onerror = (e) => {
+    console.log(`error: ${e}`);
+  };
+
   res.on("close", () => {
-    console.log(`/connect/${docid} dropped`);
+    total_cx -= 1;
+    console.log(`/connect/${docid}/${uid} dropped`);
     eventSource.close();
     res.end();
   });
