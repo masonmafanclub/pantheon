@@ -8,8 +8,8 @@ import docRouter from "./routes/doc";
 
 var app = express();
 app.set("view engine", "ejs");
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: false, limit: "50mb" }));
 
 app.use((req, res, next) => {
   res.setHeader("X-CSE356", "61f9c1e2ca96e9505dd3f7ea");
