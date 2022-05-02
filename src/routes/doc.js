@@ -3,6 +3,7 @@ import EventSource from "eventsource";
 import axios from "axios";
 
 import { isAuthenticated } from "../auth";
+import { naut_url } from "../upstream";
 
 let total_cx = 0;
 

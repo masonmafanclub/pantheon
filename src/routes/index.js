@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import { isAuthenticated } from "../auth";
+import { naut_url } from "../upstream";
 
 const router = express.Router();
 
