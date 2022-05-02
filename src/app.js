@@ -8,7 +8,7 @@ import collectionRouter from "./routes/collection";
 import usersRouter from "./routes/users";
 import mediaRouter from "./routes/media";
 import docRouter from "./routes/doc";
-import indexRouter from "./routes/index";
+import indexRouter from "./routes/index-local";
 
 var app = express();
 app.set("view engine", "ejs");

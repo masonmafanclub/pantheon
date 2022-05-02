@@ -18,6 +18,7 @@ const elastic = new Client({
 
 router.get("/search", isAuthenticated, async (req, res) => {
   const result = await elastic.search({
+    _source: ["name"],
     index: "cse356",
     query: {
       multi_match: {
