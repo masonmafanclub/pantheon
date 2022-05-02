@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-const upstreams = process.env.NAUTILUS_URL.split();
+const upstreams = process.env.NAUTILUS_URL.split(" ");
 const upsplit = upstreams.length;
 export const naut_url = (docid) => {
   let res = 0;
