@@ -2,6 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import axios from "axios";
 import { isAuthenticated } from "../auth";
+import { naut_url } from "../upstream";
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.post("/create", isAuthenticated, (req, res, next) => {
 
   axios({
     method: "post",
-    url: `http://${process.env.NAUTILUS_URL}/collection/create`,
+    url: `http://${naut_url(docid)}/collection/create`,
     data: {
       name: req.body.name,
       docid,
@@ -29,7 +30,7 @@ router.post("/delete", isAuthenticated, (req, res, next) => {
 
   axios({
     method: "post",
-    url: `http://${process.env.NAUTILUS_URL}/collection/delete`,
+    url: `http://${naut_url(docid)}/collection/delete`,
     data: { docid },
   })
     .then((nautres) => {
@@ -43,7 +44,7 @@ router.post("/delete", isAuthenticated, (req, res, next) => {
 router.get("/list", isAuthenticated, (req, res, next) => {
   axios({
     method: "get",
-    url: `http://${process.env.NAUTILUS_URL}/collection/list`,
+    url: `http://${naut_url(docid)}/collection/list`,
   }).then((nautres) => {
     res.status(200).json(nautres.data);
   });

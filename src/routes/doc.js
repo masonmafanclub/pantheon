@@ -23,7 +23,7 @@ router.get("/connect/:docid/:uid", isAuthenticated, (req, res) => {
   res.flushHeaders();
 
   const eventSource = new EventSource(
-    `http://${process.env.NAUTILUS_URL}/doc/connect/${docid}/${uid}`
+    `http://${naut_url(docid)}/doc/connect/${docid}/${uid}`
   );
 
   eventSource.onmessage = (e) => {
@@ -48,7 +48,7 @@ router.post("/op/:docid/:uid", isAuthenticated, (req, res, next) => {
   const { uid, docid } = req.params;
   axios({
     method: "post",
-    url: `http://${process.env.NAUTILUS_URL}/doc/op/${docid}/${uid}`,
+    url: `http://${naut_url(docid)}/doc/op/${docid}/${uid}`,
     data: req.body,
   })
     .then((nautres) => {
@@ -63,7 +63,7 @@ router.post("/presence/:docid/:uid", isAuthenticated, (req, res) => {
   const { uid, docid } = req.params;
   axios({
     method: "post",
-    url: `http://${process.env.NAUTILUS_URL}/doc/presence/${docid}/${uid}`,
+    url: `http://${naut_url(docid)}/doc/presence/${docid}/${uid}`,
     data: { ...req.body, name: req.session.name }, // TODO : REPLACE HI WITH ACTUAL NAME
   })
     .then((nautres) => {
@@ -78,7 +78,7 @@ router.get("/get/:docid/:uid", isAuthenticated, (req, res) => {
   const { uid, docid } = req.params;
   axios({
     method: "get",
-    url: `http://${process.env.NAUTILUS_URL}/doc/get/${docid}/${uid}`,
+    url: `http://${naut_url(docid)}/doc/get/${docid}/${uid}`,
   })
     .then((nautres) => {
       res.status(200).json(nautres.data);

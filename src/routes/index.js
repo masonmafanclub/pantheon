@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/search", isAuthenticated, (req, res) => {
   axios({
     method: "get",
-    url: `http://${process.env.NAUTILUS_URL}/index/search?q=${req.query.q}`,
+    url: `http://${naut_url("blah")}/index/search?q=${req.query.q}`,
   })
     .then((nautres) => {
       res.status(200).json(nautres.data);
@@ -20,7 +20,7 @@ router.get("/search", isAuthenticated, (req, res) => {
 router.get("/suggest", isAuthenticated, (req, res) => {
   axios({
     method: "get",
-    url: `http://${process.env.NAUTILUS_URL}/index/suggest?q=${req.query.q}`,
+    url: `http://${naut_url("bleh")}/index/suggest?q=${req.query.q}`,
   })
     .then((nautres) => {
       res.status(200).json(nautres.data);
