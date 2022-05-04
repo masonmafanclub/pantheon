@@ -28,7 +28,7 @@ router.get("/connect/:docid/:uid", isAuthenticated, (req, res) => {
   );
 
   eventSource.onmessage = (e) => {
-    console.log(`received data: ${e.data}`);
+    // console.log(`received data: ${e.data}`);
     res.write(`data: ${e.data}`);
     res.write("\n\n");
   };
